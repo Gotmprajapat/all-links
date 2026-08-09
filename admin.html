@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - My Deals</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="admin">
+
+  <h1>Admin Panel</h1>
+
+  <div class="box">
+
+    <input
+      id="productLink"
+      type="url"
+      placeholder="Paste Flipkart affiliate link"
+    >
+
+    <input
+      id="productName"
+      type="text"
+      placeholder="Product name"
+    >
+
+    <input
+      id="productImage"
+      type="url"
+      placeholder="Product image URL"
+    >
+
+    <input
+      id="productPrice"
+      type="text"
+      placeholder="Price (optional)"
+    >
+
+    <button id="addBtn">Add Product</button>
+
+    <p id="message"></p>
+
+  </div>
+
+  <h2>Saved Products</h2>
+
+  <div id="adminProducts"></div>
+
+</div>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
