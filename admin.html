@@ -11,47 +11,73 @@
 
 <div class="admin">
 
-  <h1>Admin Panel</h1>
+  <div id="loginBox" class="box">
+    <h2>🔐 Admin Login</h2>
 
-  <div class="box">
+    <input id="email" type="email" placeholder="Admin email">
+    <input id="password" type="password" placeholder="Password">
 
-    <input
-      id="productLink"
-      type="url"
-      placeholder="Paste Flipkart affiliate link"
-    >
+    <button id="loginBtn">Login</button>
 
-    <input
-      id="productName"
-      type="text"
-      placeholder="Product name"
-    >
+    <p id="loginMessage"></p>
+  </div>
 
-    <input
-      id="productImage"
-      type="url"
-      placeholder="Product image URL"
-    >
 
-    <input
-      id="productPrice"
-      type="text"
-      placeholder="Price (optional)"
-    >
+  <div id="adminPanel" style="display:none;">
 
-    <button id="addBtn">Add Product</button>
+    <div class="admin-header">
+      <div>
+        <h1>🔥 My Deals</h1>
+        <p>Product Admin Panel</p>
+      </div>
 
-    <p id="message"></p>
+      <button id="logoutBtn">Logout</button>
+    </div>
+
+
+    <div class="box">
+
+      <h2>Add Product</h2>
+
+      <input id="productName"
+        type="text"
+        placeholder="Product name">
+
+      <input id="productImage"
+        type="url"
+        placeholder="Product image URL">
+
+      <input id="productPrice"
+        type="text"
+        placeholder="Current price">
+
+      <input id="productOldPrice"
+        type="text"
+        placeholder="Old price (optional)">
+
+      <textarea id="productDescription"
+        placeholder="Short description"></textarea>
+
+      <input id="productLink"
+        type="url"
+        placeholder="Flipkart affiliate link">
+
+      <button id="addBtn">➕ Add Product</button>
+
+      <p id="message"></p>
+
+    </div>
+
+
+    <h2>Saved Products</h2>
+
+    <div id="adminProducts"></div>
 
   </div>
 
-  <h2>Saved Products</h2>
-
-  <div id="adminProducts"></div>
-
 </div>
 
-<script type="module" src="app.js"></script>
+<script type="module" src="admin.js"></script>
 
 </body>
 </html>
