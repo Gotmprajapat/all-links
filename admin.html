@@ -44,8 +44,11 @@
         placeholder="Product name">
 
       <input id="productImage"
-        type="url"
-        placeholder="Product image URL">
+  type="file"
+  accept="image/*">
+
+<img id="imagePreview"
+  style="display:none;width:120px;height:120px;object-fit:contain;margin:10px 0;border-radius:10px;">
 
       <input id="productPrice"
         type="text"
