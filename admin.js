@@ -14,16 +14,22 @@ import {
   collection,
   addDoc,
   deleteDoc,
-  updateDoc,
   doc,
   onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 
-/* =========================
+
+/* =================================
    FIREBASE CONFIG
-========================= */
+================================= */
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -37,10 +43,9 @@ const firebaseConfig = {
   measurementId: "G-SJF910VQZ2"
 };
 
-
-/* =========================
-   FIREBASE
-========================= */
+/* =================================
+   FIREBASE INITIALIZE
+================================= */
 
 const app = initializeApp(firebaseConfig);
 
@@ -48,12 +53,14 @@ const auth = getAuth(app);
 
 const db = getFirestore(app);
 
+const storage = getStorage(app);
+
 const productsRef = collection(db, "products");
 
 
-/* =========================
+/* =================================
    ELEMENTS
-========================= */
+================================= */
 
 const loginBox =
   document.getElementById("loginBox");
@@ -82,51 +89,125 @@ const message =
 const adminProducts =
   document.getElementById("adminProducts");
 
+const imageInput =
+  document.getElementById("productImage");
 
-/* =========================
+const imagePreview =
+  document.getElementById("imagePreview");
+
+
+/* =================================
+   IMAGE PREVIEW
+================================= */
+
+if (imageInput) {
+
+  imageInput.addEventListener("change", () => {
+
+    const file = imageInput.files[0];
+
+    if (!file) {
+
+      imagePreview.style.display = "none";
+
+      imagePreview.src = "";
+
+      return;
+    }
+
+
+    if (!file.type.startsWith("image/")) {
+
+      message.textContent =
+        "❌ Sirf image select karo.";
+
+      imageInput.value = "";
+
+      return;
+    }
+
+
+    const imageURL =
+      URL.createObjectURL(file);
+
+    imagePreview.src = imageURL;
+
+    imagePreview.style.display = "block";
+
+  });
+
+}
+
+
+/* =================================
    LOGIN
-========================= */
+================================= */
 
-loginBtn.addEventListener("click", async () => {
+if (loginBtn) {
 
-  const userEmail = email.value.trim();
+  loginBtn.addEventListener("click", async () => {
 
-  const userPassword = password.value;
+    const userEmail =
+      email.value.trim();
 
-  if (!userEmail || !userPassword) {
-
-    loginMessage.textContent =
-      "Email aur password dono bharo.";
-
-    return;
-  }
+    const userPassword =
+      password.value;
 
 
-  try {
+    if (!userEmail || !userPassword) {
 
-    await signInWithEmailAndPassword(
-      auth,
-      userEmail,
-      userPassword
-    );
+      loginMessage.textContent =
+        "Email aur password dono bharo.";
 
-    loginMessage.textContent = "";
+      return;
 
-  } catch (error) {
-
-    console.error(error);
-
-    loginMessage.textContent =
-      "❌ Email ya password galat hai.";
-
-  }
-
-});
+    }
 
 
-/* =========================
+    loginBtn.disabled = true;
+
+    loginBtn.textContent =
+      "Logging in...";
+
+
+    try {
+
+      await signInWithEmailAndPassword(
+        auth,
+        userEmail,
+        userPassword
+      );
+
+      loginMessage.textContent = "";
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      loginMessage.textContent =
+        "❌ Email ya password galat hai.";
+
+    }
+
+    finally {
+
+      loginBtn.disabled = false;
+
+      loginBtn.textContent =
+        "Login";
+
+    }
+
+  });
+
+}
+
+
+/* =================================
    AUTH STATE
-========================= */
+================================= */
 
 onAuthStateChanged(auth, (user) => {
 
@@ -138,7 +219,9 @@ onAuthStateChanged(auth, (user) => {
 
     loadProducts();
 
-  } else {
+  }
+
+  else {
 
     loginBox.style.display = "block";
 
@@ -149,49 +232,87 @@ onAuthStateChanged(auth, (user) => {
 });
 
 
-/* =========================
+/* =================================
    LOGOUT
-========================= */
+================================= */
 
-logoutBtn.addEventListener("click", async () => {
+if (logoutBtn) {
 
-  await signOut(auth);
+  logoutBtn.addEventListener("click", async () => {
 
-});
+    try {
+
+      await signOut(auth);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
+
+  });
+
+}
 
 
-/* =========================
+/* =================================
    ADD PRODUCT
-========================= */
+================================= */
 
-document
-  .getElementById("addBtn")
-  .addEventListener("click", async () => {
+const addBtn =
+  document.getElementById("addBtn");
+
+
+if (addBtn) {
+
+  addBtn.addEventListener("click", async () => {
 
     const name =
-      document.getElementById("productName")
-        .value.trim();
+      document
+        .getElementById("productName")
+        .value
+        .trim();
 
-    const image =
-      document.getElementById("productImage")
-        .value.trim();
+
+    const imageFile =
+      document
+        .getElementById("productImage")
+        .files[0];
+
 
     const price =
-      document.getElementById("productPrice")
-        .value.trim();
+      document
+        .getElementById("productPrice")
+        .value
+        .trim();
+
 
     const oldPrice =
-      document.getElementById("productOldPrice")
-        .value.trim();
+      document
+        .getElementById("productOldPrice")
+        .value
+        .trim();
+
 
     const description =
-      document.getElementById("productDescription")
-        .value.trim();
+      document
+        .getElementById("productDescription")
+        .value
+        .trim();
+
 
     const link =
-      document.getElementById("productLink")
-        .value.trim();
+      document
+        .getElementById("productLink")
+        .value
+        .trim();
 
+
+    /* =========================
+       VALIDATION
+    ========================= */
 
     if (!name) {
 
@@ -199,15 +320,39 @@ document
         "❌ Product name bharo.";
 
       return;
+
     }
 
-    if (!image) {
+
+    if (!imageFile) {
 
       message.textContent =
-        "❌ Product image URL bharo.";
+        "❌ Product ki photo select karo.";
 
       return;
+
     }
+
+
+    if (!imageFile.type.startsWith("image/")) {
+
+      message.textContent =
+        "❌ Sirf image file select karo.";
+
+      return;
+
+    }
+
+
+    if (imageFile.size > 5 * 1024 * 1024) {
+
+      message.textContent =
+        "❌ Image 5MB se chhoti honi chahiye.";
+
+      return;
+
+    }
+
 
     if (!price) {
 
@@ -215,7 +360,9 @@ document
         "❌ Price bharo.";
 
       return;
+
     }
+
 
     if (!link) {
 
@@ -223,16 +370,78 @@ document
         "❌ Flipkart affiliate link bharo.";
 
       return;
+
     }
 
 
+    /* =========================
+       CHECK LOGIN
+    ========================= */
+
+    const user = auth.currentUser;
+
+    if (!user) {
+
+      message.textContent =
+        "❌ Pehle login karo.";
+
+      return;
+
+    }
+
+
+    /* =========================
+       BUTTON LOADING
+    ========================= */
+
+    addBtn.disabled = true;
+
+    addBtn.textContent =
+      "Uploading...";
+
+
     try {
+
+      /* =========================
+         UPLOAD IMAGE
+      ========================= */
+
+      const safeFileName =
+        imageFile.name
+          .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+
+      const fileName =
+        `products/${Date.now()}_${safeFileName}`;
+
+
+      const storageRef =
+        ref(storage, fileName);
+
+
+      await uploadBytes(
+        storageRef,
+        imageFile
+      );
+
+
+      /* =========================
+         GET IMAGE URL
+      ========================= */
+
+      const imageURL =
+        await getDownloadURL(storageRef);
+
+
+      /* =========================
+         SAVE PRODUCT
+      ========================= */
 
       await addDoc(productsRef, {
 
         name: name,
 
-        image: image,
+        image: imageURL,
 
         price: price,
 
@@ -242,99 +451,162 @@ document
 
         link: link,
 
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+
+        createdBy: user.uid
 
       });
 
 
+      /* =========================
+         CLEAR FORM
+      ========================= */
+
       clearForm();
 
-      message.textContent =
-        "✅ Product successfully save ho gaya.";
 
-    } catch (error) {
+      message.textContent =
+        "✅ Product successfully add ho gaya.";
+
+    }
+
+    catch (error) {
 
       console.error(error);
 
       message.textContent =
-        "❌ Product save nahi hua.";
+        "❌ Product add nahi hua: " +
+        error.message;
 
     }
 
-  });
+    finally {
 
+      addBtn.disabled = false;
 
-/* =========================
-   LOAD PRODUCTS
-========================= */
-
-function loadProducts() {
-
-  onSnapshot(productsRef, (snapshot) => {
-
-    let products = [];
-
-    snapshot.forEach((item) => {
-
-      products.push({
-
-        id: item.id,
-
-        ...item.data()
-
-      });
-
-    });
-
-
-    products.sort((a, b) => {
-
-      const aTime =
-        a.createdAt?.seconds || 0;
-
-      const bTime =
-        b.createdAt?.seconds || 0;
-
-      return bTime - aTime;
-
-    });
-
-
-    if (products.length === 0) {
-
-      adminProducts.innerHTML =
-        "<p>No products added yet.</p>";
-
-      return;
+      addBtn.textContent =
+        "➕ Add Product";
 
     }
-
-
-    adminProducts.innerHTML =
-      products
-        .map(productAdminCard)
-        .join("");
-
-
-    document
-      .querySelectorAll(".deleteProduct")
-      .forEach((button) => {
-
-        button.addEventListener(
-          "click",
-          deleteProduct
-        );
-
-      });
 
   });
 
 }
 
 
-/* =========================
+/* =================================
+   LOAD PRODUCTS
+================================= */
+
+let productsListenerStarted = false;
+
+
+function loadProducts() {
+
+  if (productsListenerStarted) {
+    return;
+  }
+
+  productsListenerStarted = true;
+
+
+  onSnapshot(
+
+    productsRef,
+
+    (snapshot) => {
+
+      let products = [];
+
+
+      snapshot.forEach((item) => {
+
+        products.push({
+
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      });
+
+
+      /* =========================
+         NEWEST FIRST
+      ========================= */
+
+      products.sort((a, b) => {
+
+        const aTime =
+          a.createdAt?.seconds || 0;
+
+        const bTime =
+          b.createdAt?.seconds || 0;
+
+        return bTime - aTime;
+
+      });
+
+
+      /* =========================
+         EMPTY
+      ========================= */
+
+      if (products.length === 0) {
+
+        adminProducts.innerHTML =
+          "<p>No products added yet.</p>";
+
+        return;
+
+      }
+
+
+      /* =========================
+         DISPLAY
+      ========================= */
+
+      adminProducts.innerHTML =
+        products
+          .map(productAdminCard)
+          .join("");
+
+
+      /* =========================
+         DELETE BUTTONS
+      ========================= */
+
+      document
+        .querySelectorAll(".deleteProduct")
+        .forEach((button) => {
+
+          button.addEventListener(
+            "click",
+            deleteProduct
+          );
+
+        });
+
+    },
+
+    (error) => {
+
+      console.error(error);
+
+      adminProducts.innerHTML =
+        "<p>❌ Products load nahi hue.</p>";
+
+    }
+
+  );
+
+}
+
+
+/* =================================
    ADMIN PRODUCT CARD
-========================= */
+================================= */
 
 function productAdminCard(product) {
 
@@ -344,6 +616,7 @@ function productAdminCard(product) {
 
       <img
         src="${escapeHTML(product.image || "")}"
+        alt="${escapeHTML(product.name || "Product")}"
         style="
           width:100%;
           max-width:150px;
@@ -351,33 +624,46 @@ function productAdminCard(product) {
           object-fit:contain;
           display:block;
           margin-bottom:10px;
+          border-radius:10px;
         "
       >
 
       <h3>
-        ${escapeHTML(product.name)}
+        ${escapeHTML(product.name || "")}
       </h3>
 
       <p>
-        Price: ₹${escapeHTML(product.price || "")}
+        Price:
+        ₹${escapeHTML(product.price || "")}
       </p>
+
 
       ${
         product.oldPrice
-        ? `<p>
-            Old Price:
-            ₹${escapeHTML(product.oldPrice)}
-           </p>`
-        : ""
+          ? `
+            <p>
+              Old Price:
+              ₹${escapeHTML(product.oldPrice)}
+            </p>
+          `
+          : ""
       }
 
-      <p>
-        ${escapeHTML(product.description || "")}
-      </p>
+
+      ${
+        product.description
+          ? `
+            <p>
+              ${escapeHTML(product.description)}
+            </p>
+          `
+          : ""
+      }
+
 
       <button
         class="deleteProduct delete"
-        data-id="${product.id}"
+        data-id="${escapeHTML(product.id)}"
       >
         🗑️ Delete
       </button>
@@ -389,9 +675,9 @@ function productAdminCard(product) {
 }
 
 
-/* =========================
-   DELETE
-========================= */
+/* =================================
+   DELETE PRODUCT
+================================= */
 
 async function deleteProduct(event) {
 
@@ -405,7 +691,9 @@ async function deleteProduct(event) {
     );
 
 
-  if (!confirmDelete) return;
+  if (!confirmDelete) {
+    return;
+  }
 
 
   try {
@@ -414,45 +702,75 @@ async function deleteProduct(event) {
       doc(db, "products", id)
     );
 
+
     message.textContent =
       "✅ Product delete ho gaya.";
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(error);
 
     message.textContent =
-      "❌ Delete nahi hua.";
+      "❌ Product delete nahi hua.";
 
   }
 
 }
 
 
-/* =========================
+/* =================================
    CLEAR FORM
-========================= */
+================================= */
 
 function clearForm() {
 
-  document.getElementById("productName").value = "";
+  document
+    .getElementById("productName")
+    .value = "";
 
-  document.getElementById("productImage").value = "";
 
-  document.getElementById("productPrice").value = "";
+  document
+    .getElementById("productImage")
+    .value = "";
 
-  document.getElementById("productOldPrice").value = "";
 
-  document.getElementById("productDescription").value = "";
+  document
+    .getElementById("productPrice")
+    .value = "";
 
-  document.getElementById("productLink").value = "";
+
+  document
+    .getElementById("productOldPrice")
+    .value = "";
+
+
+  document
+    .getElementById("productDescription")
+    .value = "";
+
+
+  document
+    .getElementById("productLink")
+    .value = "";
+
+
+  if (imagePreview) {
+
+    imagePreview.src = "";
+
+    imagePreview.style.display =
+      "none";
+
+  }
 
 }
 
 
-/* =========================
-   SECURITY
-========================= */
+/* =================================
+   HTML SECURITY
+================================= */
 
 function escapeHTML(value = "") {
 
@@ -468,4 +786,4 @@ function escapeHTML(value = "") {
 
     .replaceAll("'", "&#039;");
 
-}
+        }
